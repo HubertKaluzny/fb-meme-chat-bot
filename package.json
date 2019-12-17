@@ -1,0 +1,28 @@
+{
+  "name": "fb-meme-chat-bot",
+  "version": "1.0.0",
+  "description": "Make your FB meme chat more  fun",
+  "main": "src/index.js",
+  "repository": "https://github.com/HubertKaluzny/fb-meme-chat-bot.git",
+  "author": "Hubert Kaluzny <contact@hubertkaluzny.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "facebook-chat-api": "Schmavery/facebook-chat-api",
+    "minimist": "^1.2.0",
+    "mongodb": "^3.4.0",
+    "request-promise-native": "^1.0.8"
+  },
+  "scripts": {
+    "build": "eslint src/* && eslint config.js && babel src -d dist",
+    "start": "babel src -d dist && node dist/index.js"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.5",
+    "@babel/core": "^7.7.5",
+    "@babel/preset-env": "^7.7.6",
+    "babel-polyfill": "^6.26.0",
+    "eslint": "^6.7.2"
+  }
+}
