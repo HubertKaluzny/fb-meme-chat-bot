@@ -3,14 +3,15 @@ There are so many other useful things that could have been made instead.
 
 ### Uses:
 
- - `facebook-chat-api` NPM package to communicate with FB Messenger
+ - facebook-chat-api NPM package to communicate with FB Messenger
  - MongoDB
  - Google Photos for permanent and limitless meme storage
  - Babel for modern ES features
  - ESLint to keep sane
+ - ssdeep for fuzzy hashing (requires libfuzzy-dev package)
  - Yarn
 
-### Commands:   
+### Commands:
 
 - `yarn build` - Lint & transpile files into from `src/` to `dist/`
 - `yarn start` - Builds from `src/` and runs `dist/index.js`
@@ -33,7 +34,7 @@ package for any security holes/password leak attempts.
 
 ### `./config.js`
 
-Database and feature configuration go here.
+System and feature configuration go here.
 
 ### Deployment
 

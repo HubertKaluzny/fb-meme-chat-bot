@@ -4,6 +4,13 @@ export default class ErrorHandler {
     constructor(opts) {
         this.opts = opts;
         this.exitCBs = [];
+        this.callbacksHandled = false;
+
+        process.on('exit', async () => {
+            if (!this.callbacksHandled) {
+                await this.onExit();
+            }
+        });
     }
 
     log(msg) {
@@ -18,10 +25,17 @@ export default class ErrorHandler {
         }
 
         if (this.opts.errorQuit) {
-            for (let cb of this.opts.exitCBs) {
-                await cb();
-            }
+            await this.onExit();
             process.exit(1);
+        }
+    }
+
+    async onExit() {
+        //set flag here in case we have more exceptions in our callbacks
+        this.callbacksHandled = true;
+
+        for (let cb of this.opts.exitCBs) {
+            await cb();
         }
     }
 

@@ -1,4 +1,7 @@
 import fchatAPI from 'facebook-chat-api';
+import MemeProcessor from './MemeProcessor';
+import { updateSetting, getSetting } from './DBSettings';
+import collections from './Collections';
 
 export default class IngestionEngine {
 
@@ -10,11 +13,15 @@ export default class IngestionEngine {
         this.toFollowUp = [];
         this.eh = opts.errorHandler;
         this.eh.registerExitCB(this.exit);
+
+        this.memeProcessor = new MemeProcessor(db, config, opts);
     }
 
     /* Attempt to restore ingestion engine from databse */
     async tryRestore() {
         //// TODO: Attempt to restore state
+        let settingsCol = await this.db.collection(collections.SETTINGS);
+        this.threadID = await getSetting(settingsCol, 'thread-id');
     }
 
     /* Save state before exit */
@@ -25,6 +32,9 @@ export default class IngestionEngine {
     /* Start following a thread */
     async setupForThread(threadID) {
         this.eh.log(`Subscribing to thread ${threadID}`);
+        this.threadID = threadID;
+        let settingsCol = await this.db.collection(collections.SETTINGS);
+        await updateSetting(settingsCol, 'thread-id', threadID);
     }
 
     /* Get an instance of the API client & register message listener */
@@ -66,6 +76,11 @@ export default class IngestionEngine {
         }
 
         //// TODO: message processing
+        for (let attach of msg.attachments) {
+            if (attach.type == 'photo') {
+                await this.memeProcessor.processFromImageAttachment(attach, msg.messageID, msg.senderID);
+            }
+        }
     }
 
     /* Escape callback hell */
@@ -73,7 +88,6 @@ export default class IngestionEngine {
         return new Promise((resolve) => {
             this.client.getThreadList(10, null, [], (err, list) => {
                 if (err) {
-                    console.log('uh oh');
                     console.error(err);
                     process.exit(1);
                 }
