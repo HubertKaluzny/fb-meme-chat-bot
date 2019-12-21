@@ -64,14 +64,19 @@ export default class MemeProcessor {
         }
 
         /* Fresh meme */
-        let mediaItem = await this.googleInterface.uploadImage();
+        let uuid = uuid();
+        let mediaItem = await this.googleInterface.uploadImage({
+            filename: (uuid + '.png'),
+            uuid: uuid,
+            data: (await image.getBufferAsync()),
+        });
         let memeObj = {
             indexHash: indexHash,
             originalSender: senderId,
             originalMessage: messageId,
             photoId: mediaItem.id,
             photoUrl: mediaItem.url,
-            uuid: uuid(),
+            uuid: uuid,
         };
 
         let memesCol = await this.db.collection(collections.MEMES_COL);

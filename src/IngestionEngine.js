@@ -1,7 +1,7 @@
-import fchatAPI from 'facebook-chat-api';
-import MemeProcessor from './MemeProcessor';
 import { updateSetting, getSetting } from './DBSettings';
 import collections from './Collections';
+import fchatAPI from 'facebook-chat-api';
+import MemeProcessor from './MemeProcessor';
 
 export default class IngestionEngine {
 
