@@ -1,6 +1,5 @@
 import collections from './Collections';
 import Jimp from 'jimp';
-import ssdeep from 'ssdeep.js';
 import uuid from 'uuid/v1';
 
 export default class MemeProcessor {
@@ -26,7 +25,7 @@ export default class MemeProcessor {
 
         let image = await Jimp.read(url);
 
-        let imageHash = ssdeep.digest(await image.getBufferAsync());
+        let imageHash = image.pHash();
         let indexHash = this.createIndexHash(image.clone());
         let compatibleIndexes = this.getCompatibleIndexes(indexHash);
 
@@ -41,7 +40,7 @@ export default class MemeProcessor {
             let bestMatch = null;
             let bestMatchScore = 0;
             for (let candidateImage of possibleImages) {
-                let score = ssdeep.similarity(imageHash, candidateImage.hash);
+                let score = Jimp.compareHashes(imageHash, candidateImage.hash);
                 if (score > bestMatchScore) {
                     bestMatchScore = score;
                     bestMatch = candidateImage;
@@ -111,7 +110,7 @@ export default class MemeProcessor {
     getCompatibleIndexes(indexHash) {
         let compatibleIndexes = [];
         for (let comp of this.index) {
-            let score = ssdeep.similarity(comp, indexHash);
+            let score = Jimp.compareHashes(comp, indexHash);
             if (score >= this.config.indexSimilarity) {
                 compatibleIndexes.push(comp);
             }
@@ -122,7 +121,7 @@ export default class MemeProcessor {
     /* Index Hash - fuzzy hash of resized image to 4x4 */
     async createIndexHash(image) {
         image.resize(4, 4);
-        return ssdeep.digest(await image.getBufferAsync(Jimp.MIME_PNG));
+        return image.pHash();
     }
 
     async loadIndex() {

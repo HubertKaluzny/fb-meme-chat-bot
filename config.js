@@ -1,7 +1,6 @@
 module.exports = {
-    prefix: '',
-    indexSimilarity: 80,
-    identicalThreshold: 98,
+    indexSimilarity: 0.6,
+    identicalThreshold: 0.95,
     webServer: {
         host: '',
         port: 80
@@ -19,7 +18,7 @@ module.exports = {
     reposts: {
         quipInterval: 1,
         quips: [
-            '@Name, repost!'
+            '@Name, repost!',
         ],
     }
 };
