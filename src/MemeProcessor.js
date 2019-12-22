@@ -47,16 +47,15 @@ export default class MemeProcessor {
                     bestMatch = candidateImage;
                 }
 
-                /* Score of 100 = identical */
-                if (score >= 100) {
+                if (score >= this.config.identicalThreshold) {
                     break;
                 }
             }
 
             /* Is a repost */
-            if (bestMatchScore >= 100) {
+            if (bestMatchScore >= this.config.identicalThreshold) {
                 this.repost(bestMatch, senderId);
-                return { repost: true };
+                return { repost: true, meme: bestMatch };
             }
 
             /* Not a repost but make sure we insert it into the closest binding index */
@@ -79,13 +78,25 @@ export default class MemeProcessor {
             uuid: uuid,
         };
 
-        let memesCol = await this.db.collection(collections.MEMES_COL);
+        let memesCol = await this.db.collection(collections.MEMES);
         await memesCol.insertOne(memeObj);
-        return { repost: false };
+        return { repost: false, meme: memeObj };
     }
 
-    async repost() {
-        ////TO-DO
+    /* Update repost metrics */
+    async repost(image, reposter) {
+        let memesCol = await this.db.collection(collections.MEMES);
+        let userCol = await this.db.collection(collections.USERS);
+        memesCol.updateOne(
+            { uuid: image.uuid },
+            { $inc: { reposts: 1 } }
+        );
+
+        userCol.updateOne(
+            { id: reposter },
+            { $inc: { reposts: 1 } },
+            { upsert: true }
+        );
     }
 
     async insertNewIndex(hash) {

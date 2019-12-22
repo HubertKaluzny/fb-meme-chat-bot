@@ -1,6 +1,7 @@
 module.exports = {
     prefix: '',
     indexSimilarity: 80,
+    identicalThreshold: 98,
     webServer: {
         host: '',
         port: 80
@@ -14,5 +15,11 @@ module.exports = {
     oauth: {
         clientID: '',
         clientSecret: ''
+    },
+    reposts: {
+        quipInterval: 1,
+        quips: [
+            '@Name, repost!'
+        ],
     }
 };

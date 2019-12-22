@@ -78,23 +78,52 @@ export default class IngestionEngine {
         //// TODO: message processing
         for (let attach of msg.attachments) {
             if (attach.type == 'photo') {
-                await this.memeProcessor.processFromImageAttachment(attach, msg.messageID, msg.senderID);
+                let res = await this.memeProcessor.processFromImageAttachment(attach, msg.messageID, msg.senderID);
+                if (res.repost) {
+                    handleRepost(msg.senderID, msg.messageID, res.meme);
+                }
             }
         }
     }
 
+    async handleRepost(senderID, messageID, meme) {
+        let senderInfo = await getUserInfo(senderID);
+
+        if (meme.reposts && (meme.reposts % this.config.quipInterval) == 0) {
+            //select random quip and respond
+            let quipIndex = Math.floor(Math.random() * this.config.quips.length);
+
+            let message = {
+                body: this.config.quips[quipIndex],
+                mentions: [{
+                    tag: '@Name',
+                    id: senderID
+                }],
+            };
+
+            this.client.sendMessage(message, this.threadID);
+        }
+    }
+
     /* Escape callback hell */
-    async getThreadList() {
-        return new Promise((resolve) => {
+    getThreadList() {
+        return new Promise((resolve, reject) => {
             this.client.getThreadList(10, null, [], (err, list) => {
                 if (err) {
-                    console.error(err);
-                    process.exit(1);
+                    reject(err);
+                    return
                 }
 
-                console.log('resolving');
-                return resolve(list);
+                resolve(list);
             });
         });
+    }
+
+    getUserInfo(userID) {
+        return new Promise((resolve) => {
+            this.client.getUserInfo(userID, (err, info) => {
+                resolve(info);
+            });
+        })
     }
 }
