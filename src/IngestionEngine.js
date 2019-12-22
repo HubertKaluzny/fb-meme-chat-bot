@@ -80,15 +80,13 @@ export default class IngestionEngine {
             if (attach.type == 'photo') {
                 let res = await this.memeProcessor.processFromImageAttachment(attach, msg.messageID, msg.senderID);
                 if (res.repost) {
-                    handleRepost(msg.senderID, msg.messageID, res.meme);
+                    this.handleRepost(msg.senderID, msg.messageID, res.meme);
                 }
             }
         }
     }
 
     async handleRepost(senderID, messageID, meme) {
-        let senderInfo = await getUserInfo(senderID);
-
         if (meme.reposts && (meme.reposts % this.config.quipInterval) == 0) {
             //select random quip and respond
             let quipIndex = Math.floor(Math.random() * this.config.quips.length);
@@ -111,7 +109,7 @@ export default class IngestionEngine {
             this.client.getThreadList(10, null, [], (err, list) => {
                 if (err) {
                     reject(err);
-                    return
+                    return;
                 }
 
                 resolve(list);
@@ -124,6 +122,6 @@ export default class IngestionEngine {
             this.client.getUserInfo(userID, (err, info) => {
                 resolve(info);
             });
-        })
+        });
     }
 }

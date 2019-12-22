@@ -1,6 +1,5 @@
 import collections from './Collections';
 import Jimp from 'jimp';
-import uuid from 'uuid/v1';
 
 export default class MemeProcessor {
 
