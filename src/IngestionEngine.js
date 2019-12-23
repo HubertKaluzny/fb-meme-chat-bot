@@ -51,7 +51,7 @@ export default class IngestionEngine {
                 }
 
                 this.client = api;
-                this.client.listenMqtt(this.onMessageEvent);
+                this.client.listenMqtt((err, msg) => this.onMessageEvent(err, msg));
                 resolve();
             });
         });
@@ -71,7 +71,7 @@ export default class IngestionEngine {
         }
 
         /* Only listen to the subscribed thread */
-        if (msg.threadID != this.opts.threadID) {
+        if (msg.threadID != this.threadID) {
             return;
         }
 

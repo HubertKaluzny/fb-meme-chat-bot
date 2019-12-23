@@ -24,7 +24,7 @@ export default class GoogleInterface {
         this.authClient = new google.auth.OAuth2(
             this.config.oauth.clientID,
             this.config.oauth.clientSecret,
-            this.config.webServer.domain
+            `https://${this.config.webServer.host}:${this.config.webServer.port}/oauthcallback`
         );
 
         /* Save refresh tokens */

@@ -8,7 +8,7 @@ module.exports = {
     db: {
         host: 'localhost',
         user: '',
-        pass: '',
+        password: '',
         port: 27017
     },
     oauth: {

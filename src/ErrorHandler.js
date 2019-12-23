@@ -20,9 +20,7 @@ export default class ErrorHandler {
     }
 
     async error(msg) {
-        if (this.opts.verbose) {
-            console.error(msg);
-        }
+        console.error(msg);
 
         if (this.opts.errorQuit) {
             await this.onExit();

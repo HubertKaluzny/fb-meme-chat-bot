@@ -1,7 +1,6 @@
 require('babel-polyfill');
 
 import { MongoClient } from 'mongodb';
-import bodyParser from 'body-parser';
 import config from '../config';
 import ErrorHandler from './ErrorHandler';
 import express from 'express';
@@ -50,7 +49,7 @@ MongoClient.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true }, 
 
         /* Request access to Google photos */
         let code = await oAuthPrompt(eh, googleInterface);
-        googleInterface.retrieveAccessToken(code);
+        googleInterface.retrieveAccessTokens(code);
 
         /* Messenger thread selection */
         let rl = readLine.createInterface({
@@ -102,18 +101,17 @@ async function oAuthPrompt(eh, googleInterface) {
     console.log(`Will continue when auth token received at ${config.webServer.host}:${config.webServer.port}/oauthcallback`);
 
     let app = express();
-    app.use(bodyParser.urlencoded());
 
     let authTokenPromise = new Promise((resolve) => {
         app.get('/oauthcallback', async (req, res) => {
-            if (!req.params.code) {
+            if (!req.query.code) {
                 res.status(400);
                 res.send('No authorisation token provided.');
                 eh.error('OAuth webhook did not receive authorisation token!');
             }
 
             res.send('OK');
-            resolve(req.params.code);
+            resolve(req.query.code);
         });
     });
 

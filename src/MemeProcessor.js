@@ -1,5 +1,6 @@
 import collections from './Collections';
 import Jimp from 'jimp';
+import uuid from 'uuid/v1';
 
 export default class MemeProcessor {
 
@@ -25,7 +26,7 @@ export default class MemeProcessor {
         let image = await Jimp.read(url);
 
         let imageHash = image.pHash();
-        let indexHash = this.createIndexHash(image.clone());
+        let indexHash = await this.createIndexHash(image.clone());
         let compatibleIndexes = this.getCompatibleIndexes(indexHash);
 
         /* Check for reposts */
@@ -61,10 +62,10 @@ export default class MemeProcessor {
         }
 
         /* Fresh meme */
-        let uuid = uuid();
+        let memeUUID = uuid();
         let mediaItem = await this.googleInterface.uploadImage({
-            filename: (uuid + '.png'),
-            uuid: uuid,
+            filename: (memeUUID + '.png'),
+            uuid: memeUUID,
             data: (await image.getBufferAsync()),
         });
         let memeObj = {
@@ -73,7 +74,7 @@ export default class MemeProcessor {
             originalMessage: messageId,
             photoId: mediaItem.id,
             photoUrl: mediaItem.url,
-            uuid: uuid,
+            uuid: memeUUID,
         };
 
         let memesCol = await this.db.collection(collections.MEMES);
@@ -98,7 +99,7 @@ export default class MemeProcessor {
     }
 
     async insertNewIndex(hash) {
-        this.index.push(hash);
+        this.index.push({hash: hash});
         let indexColl = await this.db.collection(collections.IMAGE_INDEX);
         await indexColl.insertOne({
             hash: hash
@@ -109,9 +110,9 @@ export default class MemeProcessor {
     getCompatibleIndexes(indexHash) {
         let compatibleIndexes = [];
         for (let comp of this.index) {
-            let score = Jimp.compareHashes(comp, indexHash);
+            let score = Jimp.compareHashes(comp.hash, indexHash);
             if (score >= this.config.indexSimilarity) {
-                compatibleIndexes.push(comp);
+                compatibleIndexes.push(comp.hash);
             }
         }
         return compatibleIndexes;
@@ -125,7 +126,7 @@ export default class MemeProcessor {
 
     async loadIndex() {
         let indexColl = await this.db.collection(collections.IMAGE_INDEX);
-        this.index = await indexColl.find({});
+        this.index = await indexColl.find({}).toArray();
     }
 
 }
