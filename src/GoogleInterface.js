@@ -12,8 +12,6 @@ export default class GoogleInterface {
         this.eh = opts.errorHandler;
         this.accessToken = null;
         this.refreshToken = null;
-
-        this.eh.registerExitCB(this.onExit);
     }
 
     getAuthClient() {
@@ -28,11 +26,15 @@ export default class GoogleInterface {
         );
 
         /* Save refresh tokens */
-        this.authClient.on('tokens', (tokens) => {
+        this.authClient.on('tokens', async (tokens) => {
             if (tokens.refresh_token) {
                 this.refreshToken = tokens.refresh_token;
             }
             this.accessToken = tokens.access_token;
+
+            let settingsCol = await this.db.collection(collections.SETTINGS);
+            updateSetting(settingsCol, 'o-auth-access-token', this.accessToken);
+            updateSetting(settingsCol, 'o-auth-refresh-token', this.refreshToken);
         });
 
         return this.authClient;
@@ -43,6 +45,9 @@ export default class GoogleInterface {
         this.authClient.setCredentials(tokens);
         this.accessToken = tokens.access_token;
         this.refreshToken = tokens.refresh_token;
+        let settingsCol = await this.db.collection(collections.SETTINGS);
+        updateSetting(settingsCol, 'o-auth-access-token', this.accessToken);
+        updateSetting(settingsCol, 'o-auth-refresh-token', this.refreshToken);
     }
 
     /* Load auth credentials from DB */
@@ -50,17 +55,10 @@ export default class GoogleInterface {
         let settingsCol = await this.db.collection(collections.SETTINGS);
         this.accessToken = await getSetting(settingsCol, 'o-auth-access-token');
         this.refreshToken = await getSetting(settingsCol, 'o-auth-refresh-token');
-        this.authClient.setCredentials({
+        (await this.getAuthClient()).setCredentials({
             access_token: this.accessToken,
             refresh_token: this.refreshToken
         });
-    }
-
-    /* Save the tokens! */
-    async onExit() {
-        let settingsCol = await this.db.collection(collections.SETTINGS);
-        await updateSetting(settingsCol, 'o-auth-access-token', this.accessToken);
-        await updateSetting(settingsCol, 'o-auth-refresh-token', this.refreshToken);
     }
 
     /* Upload image to Google Photos and return the ID and URL */

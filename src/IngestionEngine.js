@@ -12,8 +12,8 @@ export default class IngestionEngine {
 
         this.toFollowUp = [];
         this.eh = opts.errorHandler;
-        this.eh.registerExitCB(this.exit);
 
+        this.tryRestore();
         this.memeProcessor = new MemeProcessor(db, config, opts);
     }
 
@@ -22,11 +22,6 @@ export default class IngestionEngine {
         //// TODO: Attempt to restore state
         let settingsCol = await this.db.collection(collections.SETTINGS);
         this.threadID = await getSetting(settingsCol, 'thread-id');
-    }
-
-    /* Save state before exit */
-    async exit() {
-        // TODO: Save state before exiting
     }
 
     /* Start following a thread */
