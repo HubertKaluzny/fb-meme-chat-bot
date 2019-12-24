@@ -25,7 +25,7 @@ export default class MemeProcessor {
 
         let image = await Jimp.read(url);
 
-        let imageHash = image.pHash();
+        let imageHash = image.hash();
         let indexHash = await this.createIndexHash(image.clone());
         let compatibleIndexes = this.getCompatibleIndexes(indexHash);
 
@@ -33,14 +33,14 @@ export default class MemeProcessor {
         if (compatibleIndexes.length < 1) {
             await this.insertNewIndex(indexHash);
         } else {
-            let imageCol = await this.db.collection(collections.IMAGE_COL);
-            let possibleImages = await imageCol.find({'indexHash': { $in: compatibleIndexes } });
+            let imageCol = await this.db.collection(collections.MEMES);
+            let possibleImages = await imageCol.find({'indexHash': { $in: compatibleIndexes } }).toArray();
 
             /* Compare attachment with all of the images in possible indexes */
             let bestMatch = null;
             let bestMatchScore = 0;
             for (let candidateImage of possibleImages) {
-                let score = Jimp.compareHashes(imageHash, candidateImage.hash);
+                let score = (1 - Jimp.compareHashes(imageHash, candidateImage.hash));
                 if (score > bestMatchScore) {
                     bestMatchScore = score;
                     bestMatch = candidateImage;
@@ -58,7 +58,7 @@ export default class MemeProcessor {
             }
 
             /* Not a repost but make sure we insert it into the closest binding index */
-            indexHash = bestMatch.indexHash;
+            indexHash = bestMatch ? bestMatch.indexHash : indexHash;
         }
 
         /* Fresh meme */
@@ -69,14 +69,15 @@ export default class MemeProcessor {
             data: (await image.getBufferAsync(Jimp.MIME_PNG)),
         });
         let memeObj = {
+            hash: imageHash,
             indexHash: indexHash,
             originalSender: senderId,
             originalMessage: messageId,
             photoId: mediaItem.id,
             photoUrl: mediaItem.url,
             uuid: memeUUID,
+            reposts: 0
         };
-
         let memesCol = await this.db.collection(collections.MEMES);
         await memesCol.insertOne(memeObj);
         return { repost: false, meme: memeObj };
@@ -110,7 +111,7 @@ export default class MemeProcessor {
     getCompatibleIndexes(indexHash) {
         let compatibleIndexes = [];
         for (let comp of this.index) {
-            let score = Jimp.compareHashes(comp.hash, indexHash);
+            let score = (1 - Jimp.compareHashes(comp.hash, indexHash));
             if (score >= this.config.indexSimilarity) {
                 compatibleIndexes.push(comp.hash);
             }
@@ -120,8 +121,8 @@ export default class MemeProcessor {
 
     /* Index Hash - fuzzy hash of resized image to 4x4 */
     async createIndexHash(image) {
-        image.resize(4, 4);
-        return image.pHash();
+        image.resize(10, 10);
+        return image.hash();
     }
 
     async loadIndex() {

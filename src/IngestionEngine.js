@@ -61,8 +61,7 @@ export default class IngestionEngine {
     /* Process message event */
     async onMessageEvent(err, msg) {
         if (err) {
-            console.error(err);
-            process.exit(1);
+            this.eh.error(err);
         }
 
         /* For now only listen to message-events */
@@ -87,19 +86,29 @@ export default class IngestionEngine {
     }
 
     async handleRepost(senderID, messageID, meme) {
-        if (meme.reposts && (meme.reposts % this.config.quipInterval) == 0) {
+        if (((meme.reposts + 1) % this.config.reposts.quipInterval) == 0) {
             //select random quip and respond
-            let quipIndex = Math.floor(Math.random() * this.config.quips.length);
-
-            let message = {
-                body: this.config.quips[quipIndex],
-                mentions: [{
-                    tag: '@Name',
-                    id: senderID
-                }],
+            let quipIndex = Math.floor(Math.random() * this.config.reposts.quips.length);
+        
+            let quip = this.config.reposts.quips[quipIndex];
+            let userInfo = (await this.getUserInfo(senderID))[senderID];
+            let senderName = userInfo.name;
+        
+            let message  = {
+                body: quip,
+                mentions: []
             };
 
-            this.client.sendMessage(message, this.threadID);
+            if (/@Name/.test(quip)) {
+                quip = quip.replace('@Name', senderName);
+                message.body = quip;
+                message.mentions = [{
+                    tag: senderName,
+                    id: senderID
+                }];
+            }
+
+            this.client.sendMessage(message, this.threadID, null, messageID);
         }
     }
 
@@ -120,6 +129,9 @@ export default class IngestionEngine {
     getUserInfo(userID) {
         return new Promise((resolve) => {
             this.client.getUserInfo(userID, (err, info) => {
+                if (err) {
+                    console.error(err);
+                }
                 resolve(info);
             });
         });
