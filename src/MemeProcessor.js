@@ -66,7 +66,7 @@ export default class MemeProcessor {
         let mediaItem = await this.googleInterface.uploadImage({
             filename: (memeUUID + '.png'),
             uuid: memeUUID,
-            data: (await image.getBufferAsync()),
+            data: (await image.getBufferAsync(Jimp.MIME_PNG)),
         });
         let memeObj = {
             indexHash: indexHash,

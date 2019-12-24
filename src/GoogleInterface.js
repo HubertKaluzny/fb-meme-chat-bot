@@ -65,7 +65,7 @@ export default class GoogleInterface {
 
     /* Upload image to Google Photos and return the ID and URL */
     async uploadImage(image) {
-        let accessToken = await this.authClient.getAccessTokenAsync();
+        let accessToken = (await this.authClient.getAccessTokenAsync()).token;
         let reqOpts = {
             uri: 'https://photoslibrary.googleapis.com/v1/uploads',
             method: 'POST',
@@ -73,14 +73,17 @@ export default class GoogleInterface {
                 'Content-type': 'application/octet-stream',
                 'X-Goog-Upload-File-Name': image.filename,
                 'X-Goog-Upload-Protocol': 'raw',
-                Authorization: 'Bearer ' + accessToken,
+                'Authorization': 'Bearer ' + accessToken,
             },
             body: image.data
         };
 
         /* First we need to upload the data */
-        let response = await request(reqOpts);
-        let uploadToken = response.body;
+        this.eh.log(`Uploading meme ${image.filename}.`);
+        
+        let uploadToken = await request(reqOpts);
+
+        accessToken = (await this.authClient.getAccessTokenAsync()).token;
 
         /* Now we need to actually add the image to the user's album */
         reqOpts = {
@@ -88,7 +91,7 @@ export default class GoogleInterface {
             method: 'POST',
             headers: {
                 'Content-type': 'application/json',
-                Authorization: 'Bearer ' + accessToken,
+                'Authorization': 'Bearer ' + accessToken,
             },
             body: {
                 'newMediaItems' : [
@@ -99,13 +102,15 @@ export default class GoogleInterface {
                         }
                     }
                 ]
-            }
+            },
+            json: true
         };
 
-        response = await request(reqOpts);
+        this.eh.log(`Adding media item ${image.filename}.`);
+        let response = await request(reqOpts);
 
         // Should only be uploading 1 media item at a time
-        let mediaItem = JSON.parse(response.body).newMediaItemResults[0].mediaItem;
+        let mediaItem = response.newMediaItemResults[0].mediaItem;
 
         return { id: mediaItem.id, url: mediaItem.productUrl };
     }
