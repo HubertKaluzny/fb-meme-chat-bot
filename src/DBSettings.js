@@ -5,5 +5,6 @@ export async function updateSetting(settingsCol, setting, value) {
 }
 
 export async function getSetting(settingsCol, setting) {
-    return (await settingsCol.findOne({'setting': {$eq: setting} })).value;
+    let res = await settingsCol.findOne({'setting': {$eq: setting} });
+    return res ? res.value : null;
 }
